@@ -1,0 +1,372 @@
+<form hideFilters="true" theme="dark">
+  <!--Punch list
+  find a way to re-present the first run panel. right now it is dup the html
+
+  clean up stuff that didn't work - and test remarks
+
+If you want to add a rolloff of the cumulating data, this is the syntax to add down there somewhere.
+|inputlookup exploremydata.csv
+|eval rolloff=relative_time(now(),"-90d@d")
+|eval remove_time=strptime(last_found, "%m/%d/%Y %H:%M"%S")
+|where remove_time>rolloff
+|outputlookup xxx
+
+  -->
+
+  <label>exploremydata</label>
+  <init>
+    <unset token="index_token"></unset>
+    <unset token="sourcetype_token"></unset>
+    <unset token="field_token"></unset>
+    <unset token="search_for"></unset>
+    <unset token="last_run"></unset>
+    <unset token="nocsv">true</unset>
+  </init>
+  <search id="baserun">
+    <query>|inputlookup exploremydata.csv 
+            |sort - last_found
+            |head 1
+            |eval last=strptime(last_found, "%m/%d/%Y %H:%M:%S")
+            |eval nower=(now())
+            |eval delta=(nower-last)
+
+            |eval rerunq=if(delta&gt;604800,"Y","N") 
+            <!-- (7 days = 604800) below for testing
+            |eval rerunq=if(delta&gt;800,"Y","N")-->
+            |fillnull value="q" rerunq
+            |fields rerunq last
+    </query>
+  </search>
+  <fieldset submitButton="false">
+    <input type="time" token="lookback" searchWhenChanged="true">
+      <label>Timeframe for Field Review</label>
+      <default>
+        <earliest>-15d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="search_for">
+      <label>Search Index, Sourcetype, Field</label>
+    </input>
+    
+     <input type="checkbox" token="trellis_stats" searchWhenChanged="true">
+             <label></label>
+             <choice value="true">Hide Stats</choice>
+             <change>
+               <condition label="Hide Stats">
+                 <set token="trellis_stats">true</set>
+                 <unset token="trellis_stats">false</unset>
+               </condition>
+             </change>
+             <default></default>
+           </input>
+    
+  </fieldset>
+  <row depends="$nocsv$">
+    <panel><!-- NOTE if you make changes to this text, you'll have to update this text in a second location, below... for now -->
+      <html>
+        <h2>
+          <b>First Run of Dashboard</b>
+        </h2>
+      <p>This looks like the first time you've run this dashboard, or the csv file that makes this work isn't there anymore.</p>
+      <p>This dashboard is based off a csv file that is built via a query under the "Actions: Rerun Button" below.  Pressing that should pop out in a new query window and provide an 'outputlookup' to create the exploremydata.csv file.  There will be a warning about this query.  If you're trepidatious about this, click 'investigate' on that warning and remove the outputlookup command - then run it and see what it does.  </p>
+      <p>If this dashboard is used regularlly, consider creating a scheduled search from the 'Rerun Button' query to update the csv file on a recurring basis.  </p>
+     </html>
+    </panel>
+  </row>
+  <row depends="$nevershow$">
+    <panel>
+      <table>
+        <search base="baserun">
+          <query>
+  |eval last=strftime(last, "%m/%d/%Y %H:%M")
+  |table last
+</query>
+          <done>
+            <set token="last_run">$result.last$</set>
+          </done>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html> 
+        <details>
+         <summary>General Information and Actions</summary>
+         <details>
+          <summary>Overview</summary>
+          This dashboard provides and overview of the data that is available to query.<br/>
+          Click on the index below to review source types in that index, and then a sourcetype to review fields.  Finally, you can click on a field to see sample values in that field.<br/>
+          Click "Show Filters" above to open a search window to search for specific index, sourcetype or field name.
+          <p>When you run the build query, if a field/sourcetype/index is found, the entry will be updated with the date/time that is was found. </p>
+        </details>
+  <details>
+            <summary>Actions</summary>
+  <table align="center" width="100%">
+    
+     <td align="center" width="25%">   
+Lastest date/time in the lookup file:<br/>
+                <font color="cyan">
+<b>$last_run$</b>
+                </font>
+    </td>
+    <td align="center" width="25%"> 
+       <a class="btn default edit-cancel" href="search?q=%7Cinputlookup%20exploremydata.csv" target="_seecsv">Review csv file</a>
+    </td>
+    <td align="center" width="25%">
+        <a class="btn default edit-cancel" href="         ./search?q=%7C%20tstats%20count%20WHERE%20index%3D*%20OR%20index%3D_*%20GROUPBY%20index%2C%20sourcetype%0A%7C%20rename%20index%20AS%20indexname%2C%20sourcetype%20AS%20sourcetypename%0A%20%7C%20map%20maxsearches%3D200%20search%3D%22%7C%20search%20index%3D%5C%22%24indexname%24%5C%22%20sourcetype%3D%5C%22%24sourcetypename%24%5C%22%20%7C%20head%201000%20%7C%20fieldsummary%20%7C%20eval%20index%3D%5C%22%24indexname%24%5C%22%2C%20sourcetype%3D%5C%22%24sourcetypename%24%5C%22%20%7C%20fields%20index%2C%20sourcetype%2C%20field%22%0A%7Cdedup%20index%20sourcetype%20field%0A%7Ceval%20last_found%3D(now())%0A%7Cconvert%20ctime(last_found)%0A%7Cappend%20%5B%7Cinputlookup%20exploremydata.csv%20append%3Dtrue%5D%0A%7Cdedup%20index%20sourcetype%20field%0A%7Coutputlookup%20exploremydata.csv&amp;display.page.search.mode=verbose&amp;dispatch.sample_ratio=1&amp;workload_pool=&amp;earliest=-24h%40h&amp;latest=now&amp;display.page.search.tab=statistics&amp;display.general.type=statistics" target="runit_">Rerun Build Query<br/>(or run for the first time)
+        </a>
+                <br/>
+    </td>
+    <td align="center" width="25%">
+        <div stle="text-align: right;">
+          <a href="./exploremydata" class="btn btn-primary">Reload This Dashboard.
+          <i class="icon-rotate-counter"/>
+                </a>
+        </div>
+     </td>
+
+    </table>
+   </details>
+   <details>
+            <summary>First Run Info</summary>
+        <html><!-- NOTE if you make changes to this text, you'll have to update this text in a second location, below... for now -->
+              <h2>
+                <b>First Run of Dashboard</b>
+              </h2>
+      <p>This looks like the first time you've run this dashboard, or the csv file that makes this work isn't there anymore.</p>
+      <p>This dashboard is based off a csv file that is built via a query under the "Actions: Rerun Button" below.  Pressing that should pop out in a new query window and provide an 'outputlookup' to create the exploremydata.csv file.  There will be a warning about this query.  If you're trepidatious about this, click 'investigate' on that warning and remove the outputlookup command - then run it and see what it does.  </p>
+      <p>If this dashboard is used regularlly, consider creating a scheduled search from the 'Rerun Button' query to update the csv file on a recurring basis.  </p>
+     </html>
+   </details>
+   </details>
+  </html>
+    </panel>
+  </row>
+  <row depends="$trellis_stats$">
+    <panel>
+      <html>
+<!-- used to put the trellis in the center -->
+      <style>
+         #middle .facets-container{
+         display: flex !important;
+         justify-content: center !important;
+         }
+      </style>
+
+      </html>
+      <single id="middle">
+        <search>
+          <query>|inputlookup exploremydata.csv
+|stats dc(index) as indexs dc(sourcetype) as sourcetypes dc(field) as fields count as combinations</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+          <progress>
+            <condition match="$result.indexs$==&quot;0&quot;">
+              <set token="nocsv">true</set>
+            </condition>
+          </progress>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">94</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0x2B65EC"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">small</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+      <html>
+        <center>
+          <i>(for reference only - use panel below to explore the data available)</i>
+        </center>
+      </html>
+    </panel>
+  </row>
+  <row depends="$search_for$">
+    <panel>
+      <title>Search Results</title>
+      <table>
+        <search>
+          <query>
+            |inputlookup exploremydata.csv
+            |search field=$search_for$ OR sourcetype=$search_for$ OR index=$search_for$
+            |eval foundas=case(match(field,"$search_for$"),"field",sourcetype="$search_for$","sourcetype",index="$search_for$","index")
+            |stats dc(field) as fieldc, values(field) as fieldv, dc(index) as indexc, values(index) as indexv, dc(sourcetype) as sourcetypec values(sourcetype) as sourcetypev by foundas
+            |eval search_term=case(foundas="field",fieldv, foundas="sourcetype",sourcetypev, foundas="index",indexv)
+            |eval fields=if(fieldc&gt;5,fieldc,fieldv)
+            |eval sourcetypes=if(sourcetypec&gt;5,sourcetypec,sourcetypev)
+            |eval indexs=if(indexc&gt;5,indexc,indexv)
+            |rename foundas AS found_in
+            |mvexpand sourcetypes
+            |mvexpand indexs
+            |table search_term found_in, indexs sourcetypes fields
+            
+          </query>
+          
+          <done>
+            <set token="foundin">$row.found_in$</set>
+          </done>          
+        </search>
+        
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">true</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        
+          <drilldown>
+          <condition match="$row.found_in$=&quot;index&quot;">
+          <set token="index_token">$row.indexs$</set>
+          <unset token="sourcetype_token"></unset>
+          <unset token="field_token"></unset>
+          </condition>
+          <condition match="$row.found_in$=&quot;sourcetype&quot;">
+          <set token="index_token">$row.indexs$</set>
+          <set token="sourcetype_token">$row.sourcetypes$</set>
+          <unset token="field_token"></unset>
+          </condition>
+          <condition match="$row.found_in$=&quot;field&quot;">
+          <set token="index_token">$row.indexs$</set>  
+          <set token="sourcetype_token">$row.sourcetypes$</set>
+          <set token="field_token">$row.fields$</set>
+          </condition>
+        </drilldown>
+
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Select Index to Explore</title>
+      <table>
+        <search>
+          <query>|inputlookup exploremydata.csv
+|dedup index
+|fields index
+|eval sorting=case(match(index,"^_\S+"),1,
+match(sourcetype,"stash"),3,
+true(),5)
+|sort - sorting
+|table index
+</query>
+          <earliest>$lookback.earliest$</earliest>
+          <latest>$lookback.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <drilldown>
+          <set token="index_token">$click.value$</set>
+        </drilldown>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel depends="$index_token$">
+      <title>select sourcetype to review fields</title>
+      <table>
+        <search>
+          <query>|inputlookup exploremydata.csv
+|search index=$index_token$
+|dedup index sourcetype 
+|fields index sourcetype</query>
+          <earliest>$lookback.earliest$</earliest>
+          <latest>$lookback.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+          <done>
+            <unset token="field_token"></unset>
+            <unset token="form.field_token"></unset>
+            <unset token="sourcetype_token"></unset>
+            <unset token="form.sourcetype_token"></unset>
+            <unset token="search_for"></unset>
+            <unset token="form.search_for"></unset>
+          </done>
+        </search>
+        <drilldown>
+          <set token="sourcetype_token">$row.sourcetype$</set>
+          <unset token="field_token"></unset>
+        </drilldown>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row depends="$sourcetype_token$">
+    <panel>
+      <title>field values for index="$index_token$" sourcetype="$sourcetype_token$"</title>
+      <html>
+        Click on field name to see sample values or<br/>
+        <a href="search?q=search%20index%3D$index_token$%20sourcetype%3D$sourcetype_token$%20%7Chead%2020%20%7Cfields%20*&amp;display.page.search.mode=verbose&amp;dispatch.sample_ratio=1&amp;workload_pool=&amp;earliest=-24h%40h&amp;latest=now" target="_sample">
+          <b>click here</b> for complete sample events for $index_token$ $sourcetype_token$ </a>
+      </html>
+      <table>
+        <search>
+          <query>|inputlookup exploremydata.csv
+|search index="$index_token$"
+ sourcetype="$sourcetype_token$"
+ |streamstats count
+ |eval sets = count % 5
+ |eval fields_{sets} = field
+ |stats values(fields_*) as fields_*
+ |rename fields_0 as fields, fields_1 as "fields ", fields_2 as "fields  ", fields_3 as "fields   ", fields_4 as "fields    "</query>
+          <earliest>$lookback.earliest$</earliest>
+          <latest>$lookback.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <drilldown>
+          <set token="field_token">$click.value2$</set>
+        </drilldown>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel depends="$field_token$">
+      <title>Sample values for "$field_token$" in index="$index_token$" sourcetype="$sourcetype_token$"</title>
+      
+      <table>
+        <search>
+          <query>index="$index_token$"
+ sourcetype="$sourcetype_token$"
+ |top "$field_token$"
+ |head 10
+ |table "$field_token$"</query>
+          <earliest>$lookback.earliest$</earliest>
+          <latest>$lookback.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+      <html>If there are no results, adjust the timeframe selector above.  Not all fields are in all events.</html>
+    </panel>
+  </row>
+</form>
