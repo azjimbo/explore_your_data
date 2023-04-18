@@ -12,8 +12,8 @@ If you want to add a rolloff of the cumulating data, this is the syntax to add d
 |outputlookup xxx
 
   -->
-
   <label>exploremydata</label>
+  <description>version 1.1</description>
   <init>
     <unset token="index_token"></unset>
     <unset token="sourcetype_token"></unset>
@@ -48,22 +48,21 @@ If you want to add a rolloff of the cumulating data, this is the syntax to add d
     <input type="text" token="search_for">
       <label>Search Index, Sourcetype, Field</label>
     </input>
-    
-     <input type="checkbox" token="trellis_stats" searchWhenChanged="true">
-             <label></label>
-             <choice value="true">Hide Stats</choice>
-             <change>
-               <condition label="Hide Stats">
-                 <set token="trellis_stats">true</set>
-                 <unset token="trellis_stats">false</unset>
-               </condition>
-             </change>
-             <default></default>
-           </input>
-    
+    <input type="checkbox" token="trellis_stats" searchWhenChanged="true">
+      <label></label>
+      <choice value="true">Hide Stats</choice>
+      <change>
+        <condition label="Hide Stats">
+          <set token="trellis_stats">true</set>
+          <unset token="trellis_stats">false</unset>
+        </condition>
+      </change>
+      <default></default>
+    </input>
   </fieldset>
   <row depends="$nocsv$">
-    <panel><!-- NOTE if you make changes to this text, you'll have to update this text in a second location, below... for now -->
+    <panel>
+      <!-- NOTE if you make changes to this text, you'll have to update this text in a second location, below... for now -->
       <html>
         <h2>
           <b>First Run of Dashboard</b>
@@ -115,8 +114,8 @@ Lastest date/time in the lookup file:<br/>
        <a class="btn default edit-cancel" href="search?q=%7Cinputlookup%20exploremydata.csv" target="_seecsv">Review csv file</a>
     </td>
     <td align="center" width="25%">
-        <a class="btn default edit-cancel" href="         ./search?q=%7C%20tstats%20count%20WHERE%20index%3D*%20OR%20index%3D_*%20GROUPBY%20index%2C%20sourcetype%0A%7C%20rename%20index%20AS%20indexname%2C%20sourcetype%20AS%20sourcetypename%0A%20%7C%20map%20maxsearches%3D200%20search%3D%22%7C%20search%20index%3D%5C%22%24indexname%24%5C%22%20sourcetype%3D%5C%22%24sourcetypename%24%5C%22%20%7C%20head%201000%20%7C%20fieldsummary%20%7C%20eval%20index%3D%5C%22%24indexname%24%5C%22%2C%20sourcetype%3D%5C%22%24sourcetypename%24%5C%22%20%7C%20fields%20index%2C%20sourcetype%2C%20field%22%0A%7Cdedup%20index%20sourcetype%20field%0A%7Ceval%20last_found%3D(now())%0A%7Cconvert%20ctime(last_found)%0A%7Cappend%20%5B%7Cinputlookup%20exploremydata.csv%20append%3Dtrue%5D%0A%7Cdedup%20index%20sourcetype%20field%0A%7Coutputlookup%20exploremydata.csv&amp;display.page.search.mode=verbose&amp;dispatch.sample_ratio=1&amp;workload_pool=&amp;earliest=-24h%40h&amp;latest=now&amp;display.page.search.tab=statistics&amp;display.general.type=statistics" target="runit_">Rerun Build Query<br/>(or run for the first time)
-        </a>
+        <a class="btn default edit-cancel" href="./search?q=%7C%20tstats%20count%20WHERE%20index%3D*%20OR%20index%3D_*%20GROUPBY%20index%2C%20sourcetype%0A%7C%20rename%20index%20AS%20indexname%2C%20sourcetype%20AS%20sourcetypename%0A%20%7C%20map%20maxsearches%3D200%20search%3D%22%7C%20search%20index%3D%5C%22%24indexname%24%5C%22%20sourcetype%3D%5C%22%24sourcetypename%24%5C%22%20%7C%20head%201000%20%7C%20fieldsummary%20%7C%20eval%20index%3D%5C%22%24indexname%24%5C%22%2C%20sourcetype%3D%5C%22%24sourcetypename%24%5C%22%20%7C%20fields%20index%2C%20sourcetype%2C%20field%22%0A%7Cdedup%20index%20sourcetype%20field%0A%7Ceval%20last_found%3D(now())%0A%7Cconvert%20ctime(last_found)%0A%7Cappend%20%5B%7Cinputlookup%20exploremydata.csv%20append%3Dtrue%5D%0A%7Cdedup%20index%20sourcetype%20field%0A%0A%7C%20sort%20%2B%20last_found%0A%0A%7C%20eval%20rolloff%3Drelative_time(now()%2C%22-60d%40d%22)%0A%7C%20eval%20remove_time%3Dstrptime(last_found%2C%20%22%25m%2F%25d%2F%25Y%20%25H%3A%25M%3A%25S%22)%0A%7C%20where%20remove_time%3Erolloff%0A%7C%20table%20index%20sourcetype%20field%20last_found%0A%0A%7Coutputlookup%20exploremydata.csv" target="runit_">Rerun Build Query<br/>(or run for the first time)</a>
+        
                 <br/>
     </td>
     <td align="center" width="25%">
@@ -131,7 +130,8 @@ Lastest date/time in the lookup file:<br/>
    </details>
    <details>
             <summary>First Run Info</summary>
-        <html><!-- NOTE if you make changes to this text, you'll have to update this text in a second location, below... for now -->
+        <html>
+              <!-- NOTE if you make changes to this text, you'll have to update this text in a second location, below... for now -->
               <h2>
                 <b>First Run of Dashboard</b>
               </h2>
@@ -189,7 +189,7 @@ Lastest date/time in the lookup file:<br/>
       </single>
       <html>
         <center>
-          <i>(for reference only - use panel below to explore the data available)</i>
+          <i>(for reference only - use panel below to explore the data available)</i> - last updated: $last_run$
         </center>
       </html>
     </panel>
@@ -214,12 +214,10 @@ Lastest date/time in the lookup file:<br/>
             |table search_term found_in, indexs sourcetypes fields
             
           </query>
-          
           <done>
             <set token="foundin">$row.found_in$</set>
-          </done>          
+          </done>
         </search>
-        
         <option name="count">10</option>
         <option name="dataOverlayMode">none</option>
         <option name="drilldown">true</option>
@@ -227,25 +225,23 @@ Lastest date/time in the lookup file:<br/>
         <option name="rowNumbers">false</option>
         <option name="totalsRow">false</option>
         <option name="wrap">true</option>
-        
-          <drilldown>
+        <drilldown>
           <condition match="$row.found_in$=&quot;index&quot;">
-          <set token="index_token">$row.indexs$</set>
-          <unset token="sourcetype_token"></unset>
-          <unset token="field_token"></unset>
+            <set token="index_token">$row.indexs$</set>
+            <unset token="sourcetype_token"></unset>
+            <unset token="field_token"></unset>
           </condition>
           <condition match="$row.found_in$=&quot;sourcetype&quot;">
-          <set token="index_token">$row.indexs$</set>
-          <set token="sourcetype_token">$row.sourcetypes$</set>
-          <unset token="field_token"></unset>
+            <set token="index_token">$row.indexs$</set>
+            <set token="sourcetype_token">$row.sourcetypes$</set>
+            <unset token="field_token"></unset>
           </condition>
           <condition match="$row.found_in$=&quot;field&quot;">
-          <set token="index_token">$row.indexs$</set>  
-          <set token="sourcetype_token">$row.sourcetypes$</set>
-          <set token="field_token">$row.fields$</set>
+            <set token="index_token">$row.indexs$</set>
+            <set token="sourcetype_token">$row.sourcetypes$</set>
+            <set token="field_token">$row.fields$</set>
           </condition>
         </drilldown>
-
       </table>
     </panel>
   </row>
@@ -346,7 +342,6 @@ true(),5)
     </panel>
     <panel depends="$field_token$">
       <title>Sample values for "$field_token$" in index="$index_token$" sourcetype="$sourcetype_token$"</title>
-      
       <table>
         <search>
           <query>index="$index_token$"
