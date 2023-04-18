@@ -1,17 +1,25 @@
 <form hideFilters="true" theme="dark">
-  <!--Punch list
-  find a way to re-present the first run panel. right now it is dup the html
+  <!-- Welcome!  
+Use this query for your saved search (uncomment the rolloff if you want to include that):
 
-  clean up stuff that didn't work - and test remarks
+| tstats count WHERE index=* OR index=_* GROUPBY index, sourcetype
+| rename index AS indexname, sourcetype AS sourcetypename
+ | map maxsearches=200 search="| search index=\"$indexname$\" sourcetype=\"$sourcetypename$\" | head 1000 | fieldsummary | eval index=\"$indexname$\", sourcetype=\"$sourcetypename$\" | fields index, sourcetype, field"
+|dedup index sourcetype field
+|eval last_found=(now())
+|convert ctime(last_found)
+|append [|inputlookup exploremydata.csv append=true]
+|dedup index sourcetype field
 
-If you want to add a rolloff of the cumulating data, this is the syntax to add down there somewhere.
-|inputlookup exploremydata.csv
-|eval rolloff=relative_time(now(),"-90d@d")
-|eval remove_time=strptime(last_found, "%m/%d/%Y %H:%M"%S")
-|where remove_time>rolloff
-|outputlookup xxx
+| sort + last_found
 
+```| eval rolloff=relative_time(now(),"-60d@d")
+| eval remove_time=strptime(last_found, "%m/%d/%Y %H:%M:%S")
+| where remove_time>rolloff```
+| table index sourcetype field last_found
+| outputlookup exploremydata.csv
   -->
+  
   <label>exploremydata</label>
   <description>version 1.1</description>
   <init>
