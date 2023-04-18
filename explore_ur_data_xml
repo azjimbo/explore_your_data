@@ -18,6 +18,9 @@ Use this query for your saved search (uncomment the rolloff if you want to inclu
 | where remove_time>rolloff```
 | table index sourcetype field last_found
 | outputlookup exploremydata.csv
+
+
+Enjoy - James Callahan, www.professionalparanoid.com
   -->
   
   <label>exploremydata</label>
